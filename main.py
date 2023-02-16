@@ -1,71 +1,68 @@
-# -*- coding: utf-8 -*-
-
 import pygame
 
-# 初期設定
+# 画面の大きさ
+SCREEN_WIDTH = 800
+SCREEN_HEIGHT = 600
+
+# ゲームの初期化
 pygame.init()
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+pygame.display.set_caption("Block Breaker")
 
-# 画面の設定
-size = (700, 500)
-screen = pygame.display.set_mode(size)
-pygame.display.set_caption("Breakout Game")
+# ブロックのリスト
+blocks = []
 
-# ブロックの設定
-block_list = []
-block_color = (255, 0, 0)
-for x in range(0, 650, 50):
-    for y in range(50, 100, 50):
-        block = pygame.Rect(x, y, 50, 25)
-        block_list.append(block)
+# ブロックを作成してリストに追加
+for i in range(5):
+    for j in range(5):
+        block = pygame.Rect(i*160, j*120, 150, 100)
+        blocks.append(block)
 
-# ボールの設定
-ball_color = (255, 255, 255)
-ball_radius = 10
-ball_rect = pygame.Rect(325, 450, ball_radius, ball_radius)
-ball_speed = [5, -5]
+# ボールの座標
+ball_x = SCREEN_WIDTH/2
+ball_y = SCREEN_HEIGHT/2
 
-# パドルの設定
-paddle_color = (255, 255, 255)
-paddle_rect = pygame.Rect(300, 480, 100, 20)
+# ボールの移動速度
+ball_speed_x = 5
+ball_speed_y = 5
 
-# ゲームループ
-done = False
-clock = pygame.time.Clock()
-while not done:
+# パドルの座標
+paddle_x = SCREEN_WIDTH/2
+paddle_y = SCREEN_HEIGHT-50
+
+# ゲームのメインループ
+running = True
+while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            done = True
-
-    # パドルの移動
-    keys = pygame.key.get_pressed()
-    if keys[pygame.K_LEFT]:
-        paddle_rect.x -= 5
-    if keys[pygame.K_RIGHT]:
-        paddle_rect.x += 5
+            running = False
 
     # ボールの移動
-    ball_rect = ball_rect.move(ball_speed)
+    ball_x += ball_speed_x
+    ball_y += ball_speed_y
 
-    # ボールとブロックの当たり判定
-    for block in block_list:
-        if ball_rect.colliderect(block):
-            ball_speed[1] = -ball_speed[1]
-            block_list.remove(block)
+    # ボールが画面外に出たら反射
+    if ball_x < 0 or ball_x > SCREEN_WIDTH:
+        ball_speed_x = -ball_speed_x
+    if ball_y < 0:
+        ball_speed_y = -ball_speed_y
+    if ball_y > SCREEN_HEIGHT:
+        running = False
 
-    # ボールとパドルの当たり判定
-    if ball_rect.colliderect(paddle_rect):
-        ball_speed[1] = -ball_speed[1]
+    # パドルの移動
+    paddle_x, _, _, _ = pygame.mouse.get_pos()
+
+    # ブロックとボールの当たり判定
+    for block in blocks:
+        if block.collidepoint(ball_x, ball_y):
+            ball_speed_y = -ball_speed_y
+            blocks.remove(block)
+            break
+
+    # パドルとボールの当たり判定
+    if (ball_x > paddle_x and ball_x < paddle_x + 150) and (ball_y > paddle_y):
+        ball_speed_y = -ball_speed_y
 
     # 画面の描画
     screen.fill((0, 0, 0))
-    for block in block_list:
-        pygame.draw.rect(screen, block_color, block)
-    pygame.draw.circle(screen, ball_color, ball_rect.center, ball_radius)
-    pygame.draw.rect(screen, paddle_color, paddle_rect)
-    pygame.display.flip()
-
-    # 60fpsで実行
-    clock.tick(60)
-
-# 終了処理
-pygame.quit()
+    pygame.draw.
