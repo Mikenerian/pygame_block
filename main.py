@@ -1,7 +1,7 @@
 from os import environ
 environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 import pygame
-import random
+import math
 
 # 画面の大きさ
 SCREEN_WIDTH = 800
@@ -24,7 +24,10 @@ PADDLE_HEIGHT = 10
 PADDLE_COLOR = (255, 255, 255)
 
 # ボールの速度
-BALL_SPEED = 2
+BALL_SPEED = 3
+
+# ライフポイントの設定
+lives = 5
 
 # ゲームの初期化
 pygame.init()
@@ -33,7 +36,7 @@ pygame.display.set_caption("Block Breaker")
 
 # ブロックのリスト
 blocks = []
-for i in range(5):
+for i in range(8):
     for j in range(5):
         x = (BLOCK_MARGIN + BLOCK_WIDTH) * i + BLOCK_MARGIN
         y = (BLOCK_MARGIN + BLOCK_HEIGHT) * j + BLOCK_MARGIN + 50
@@ -78,13 +81,32 @@ while running:
     if BALL_Y - BALL_RADIUS <= 0:
         ball_speed_y = -ball_speed_y
     elif BALL_Y + BALL_RADIUS >= SCREEN_HEIGHT:
-        # ボールが画面下端に到達した場合は初期位置に戻す
-        BALL_X = SCREEN_WIDTH // 2
-        BALL_Y = SCREEN_HEIGHT // 2
+        # ボールが画面下端に到達した場合はライフポイントを減らす
+        lives -= 1
+        if lives == 0:
+            # ライフポイントが0になったらゲームオーバー
+            font = pygame.font.Font(None, 50)
+            text = font.render("Game Over", True, (255, 255, 255))
+            screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, SCREEN_HEIGHT // 2 - text.get_height() // 2))
+            pygame.display.update()
+            pygame.time.wait(3000)
+            running = False
+        else:
+            # ライフポイントが残っている場合はボールを初期位置に戻す
+            BALL_X = SCREEN_WIDTH // 2
+            BALL_Y = SCREEN_HEIGHT // 2
+            ball_speed_x = BALL_SPEED
+            ball_speed_y = -BALL_SPEED
 
     # ボールがパドルに当たった場合の処理
     if BALL_Y + BALL_RADIUS >= paddle_y and paddle_x < BALL_X < paddle_x + PADDLE_WIDTH:
-        ball_speed_y = -ball_speed_y
+        # パドルの中心座標とボールの中心座標の差を計算する
+        diff = (BALL_X - (paddle_x + PADDLE_WIDTH / 2)) / (PADDLE_WIDTH / 2)
+        # 角度を計算する
+        angle = diff * 45
+        # ボールのx方向とy方向の速度を設定する
+        ball_speed_x = BALL_SPEED * math.sin(math.radians(angle))
+        ball_speed_y = -BALL_SPEED * math.cos(math.radians(angle))
 
     # ボールがブロックに当たった場合の処理
     for block, color in blocks:
@@ -108,6 +130,11 @@ while running:
 
     for block, color in blocks:
         pygame.draw.rect(screen, color, block)
+
+    # ライフポイントを表示する
+    font = pygame.font.Font(None, 36)
+    text = font.render("Lives : {}".format(lives), True, (255, 255, 255))
+    screen.blit(text, (10, 10))
 
     pygame.display.flip()
 
